@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR</title>
+  <style>
+    body {
+      margin: 20px;
+      background: #ffffff;
+    }
+    input {
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    canvas {
+      display: none;
+      margin-bottom: 16px;
+    }
+    .split-btn {
+      display: none;
+      position: relative;
+    }
+    #arrow-btn {
+      border-left: none;
+    }
+    .menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #ffffff;
+      border: 1px solid #767676;
+      min-width: 100%;
+      box-sizing: border-box;
+    }
+    .menu div {
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .menu div:hover {
+      background: #eeeeee;
+    }
+  </style>
+</head>
+<body>
+
+  <input type="text" id="text" oninput="makeQR()">
+  <canvas id="qr"></canvas>
+
+  <div class="split-btn" id="controls">
+    <button id="save-btn" onclick="downloadQR()">Сохранить</button>
+    <button id="arrow-btn" onclick="toggleMenu(event)">▼</button>
+    <div class="menu" id="menu">
+      <div onclick="saveAs('png')">PNG</div>
+      <div onclick="saveAs('jpg')">JPG</div>
+    </div>
+  </div>
+
+  <script>
+    const s = document.createElement('script');
+    s.src = 'https://' + '://cloudflare.com';
+    document.head.appendChild(s);
+
+    let currentFormat = 'png';
+    const canvas = document.getElementById('qr');
+    const controls = document.getElementById('controls');
+
+    function makeQR() {
+      const val = document.getElementById('text').value.trim();
+      if (!val || typeof QRCode === 'undefined') {
+        canvas.style.display = 'none';
+        controls.style.display = 'none';
+        return;
+      }
+
+      const temp = document.createElement('div');
+      new QRCode(temp, {
+        text: unescape(encodeURIComponent(val)),
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.L
+      });
+
+      const srcCanvas = temp.querySelector('canvas');
+      if (srcCanvas) {
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.drawImage(srcCanvas, 0, 0);
+        canvas.style.display = 'block';
+        controls.style.display = 'inline-flex';
+      }
+    }
+
+    function toggleMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('menu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function saveAs(fmt) {
+      currentFormat = fmt;
+      document.getElementById('menu').style.display = 'none';
+      downloadQR();
+    }
+
+    function downloadQR() {
+      const mime = currentFormat === 'jpg' ? 'image/jpeg' : 'image/png';
+      const link = document.createElement('a');
+      link.download = 'qr.' + currentFormat;
+      link.href = canvas.toDataURL(mime, 1.0);
+      link.click();
+    }
+
+    document.addEventListener('click', () => {
+      document.getElementById('menu').style.display = 'none';
+    });
+  </script>
+
+</body>
+</html>
